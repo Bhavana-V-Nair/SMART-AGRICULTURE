@@ -1,0 +1,118 @@
+#define BLYNK_TEMPLATE_ID "TMPL3gTw2LNyQ"
+#define BLYNK_TEMPLATE_NAME "agriculture using esp32"
+#define BLYNK_AUTH_TOKEN "IUktBWJeBqTkAaGR-D-p5yhEYejA0kzJ"
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+#include <DHT.h>
+
+
+// WiFi credentials
+char ssid[] = "Redmi 9";
+char pass[] = "12345678";
+
+
+// Blynk authentication token
+char auth[] = "IUktBWJeBqTkAaGR-D-p5yhEYejA0kzJ";
+
+
+
+
+// DHT sensor configuration
+#define DHT_PIN 4   // GPIO pin connected to DHT sensor
+#define DHT_TYPE DHT11
+#define SOIL_MOISTURE_PIN 32
+#define PUMP_PIN 14
+#define MOTOR_PIN1 26// GPIO pin where motor control pin 1 is connected
+#define MOTOR_PIN2 27 // GPIO pin where motor control pin 2 is connected
+
+
+DHT dht(DHT_PIN, DHT_TYPE);
+
+
+void setup() {
+  Serial.begin(9600);
+
+
+  // Connect to WiFi
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(250);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected to WiFi");
+
+
+  // Initialize Blynk
+  Blynk.begin(auth, ssid, pass);
+  // Initialize DHT sensor
+  dht.begin();
+
+
+  // Set motor pins and pump pin as outputs
+  pinMode(MOTOR_PIN1, OUTPUT);
+  pinMode(MOTOR_PIN2, OUTPUT);
+  pinMode(PUMP_PIN, OUTPUT);
+}
+
+
+void loop() {
+  Blynk.run();
+  Blynk.run();
+
+
+  // Read temperature, humidity, and soil moisture
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+  float soil_moisture = analogRead(SOIL_MOISTURE_PIN);
+
+
+  // Display data on Blynk app
+  Blynk.virtualWrite(V0, temperature);
+  Blynk.virtualWrite(V1, humidity);
+  Blynk.virtualWrite(V2, soil_moisture);
+
+
+  // Check soil moisture level and turn on pump if below threshold
+  if (soil_moisture >4000) { // Adjust threshold value as needed
+    digitalWrite(PUMP_PIN, HIGH); // Turn on the pump
+    digitalWrite(MOTOR_PIN1, LOW); // Turn off motor
+    digitalWrite(MOTOR_PIN2, LOW); // Turn off motor
+    delay(2000); // Pump runs for 2 seconds
+    digitalWrite(PUMP_PIN, LOW); // Turn off the pump
+  } else {
+    digitalWrite(PUMP_PIN, LOW); // Turn off the pump
+    // Rotate the motor based on Blynk input
+    Blynk.run();
+  }
+
+
+  // Condition to turn off motor
+  if (soil_moisture <= 4000) {
+    digitalWrite(MOTOR_PIN1, LOW); // Turn off motor
+    digitalWrite(MOTOR_PIN2, LOW); // Turn off motor
+  }
+}
+
+
+// Blynk virtual pin handler for motor control
+BLYNK_WRITE(V3) {
+  int motorDirection = param.asInt();  // Get value from Blynk app (-1 for anticlockwise, 0 for stop, 1 for clockwise)
+  
+  // Control the motor based on the received value
+  if (motorDirection == 1) {
+    // Rotate motor clockwise
+    digitalWrite(MOTOR_PIN1, HIGH);
+    digitalWrite(MOTOR_PIN2, LOW);
+    delay(5000);
+   
+  } else if (motorDirection == -1) {
+    // Rotate motor anticlockwise
+    digitalWrite(MOTOR_PIN1, LOW);
+    digitalWrite(MOTOR_PIN2, HIGH);
+    delay(5000);
+  } else {
+    // Stop the motor
+    digitalWrite(MOTOR_PIN1, LOW);
+    digitalWrite(MOTOR_PIN2, LOW);
+  }
+}
