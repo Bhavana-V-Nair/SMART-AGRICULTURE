@@ -12,7 +12,7 @@ __Requirements__ <br>
 Hardware<br>
 ESP32/Arduino, Soil Moisture Sensor, DHT11/DHT22, Relay, DC Motor.<br>
 Software<br>
-Arduino IDE/MicroPython, Blynk/Firebase, ESP Wi-Fi library.<br><br>
+Arduino IDE, Blynk, ESP Wi-Fi library.<br><br>
 __How to Use__ <br>
 Setup: Connect sensors and actuators as per the circuit diagram.<br>
 Deploy: Clone the repo, configure Wi-Fi, and upload the code.<br>
